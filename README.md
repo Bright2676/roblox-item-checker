@@ -11,7 +11,6 @@ A Discord bot that monitors Roblox items and notifies users when specific items 
 ## Usage
 
 1. Invite the bot to your Discord server using the [bot invite link](https://discord.com/oauth2/authorize?client_id=1328532981153009664&permissions=8&integration_type=0&scope=applications.commands+bot).
-  - 1a. Note that you can just clone the repo and run it that way, but the choice is yours.
 2. Use commands to configure the bot (`add_item` and `remove_item` respectively)
 3. The bot will automatically monitor items and send updates to the configured channel.
 
