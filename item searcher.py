@@ -3,7 +3,7 @@ from discord.ext import commands
 import requests
 import asyncio
 
-TOKEN = "not taking my token little bro"
+TOKEN = "YOUR TOKEN GOES HERE"
 CHANNEL_ID = 0
 ITEM_FILE = "item_ids.txt"
 
@@ -14,11 +14,9 @@ def load_item_ids():
     except FileNotFoundError:
         return []
 
-def save_item_ids():
+def save_item_ids(item_ids):
     with open(ITEM_FILE, "w") as file:
-        file.writelines(f"{item_id}\n" for item_id in ITEM_IDS)
-
-ITEM_IDS = load_item_ids()
+        file.writelines(f"{item_id}\n" for item_id in item_ids)
 
 intents = discord.Intents.default()
 intents.messages = True
@@ -45,7 +43,8 @@ async def monitor_items():
     notified = {}
 
     while not bot.is_closed():
-        for item_id in ITEM_IDS:
+        item_ids = load_item_ids()
+        for item_id in item_ids:
             if item_id not in notified:
                 notified[item_id] = None
 
@@ -58,6 +57,7 @@ async def monitor_items():
                     description=f"The item with ID {item_id} is now on sale for {price} Robux! <:yeah:1328531380849737739>\nCheck it out: [Click here](https://www.roblox.com/catalog/{item_id})",
                     color=discord.Color.green()
                 )
+                embed.set_footer(text="Created by bright2676 - Version 1.0", icon_url="https://static.wikia.nocookie.net/nicos-nextbots/images/9/94/Steam.png/revision/latest?cb=20240428120708")
                 await channel.send(embed=embed)
 
             elif not on_sale and notified[item_id] != "off_sale":
@@ -67,6 +67,7 @@ async def monitor_items():
                     description=f"The item with ID {item_id} is now off sale. <:nope:1328532071903399967>\nCheck it out: [Click here](https://www.roblox.com/catalog/{item_id})",
                     color=discord.Color.red()
                 )
+                embed.set_footer(text="Created by bright2676 - Version 1.0", icon_url="https://static.wikia.nocookie.net/nicos-nextbots/images/9/94/Steam.png/revision/latest?cb=20240428120708")
                 await channel.send(embed=embed)
 
         await asyncio.sleep(60)
@@ -75,42 +76,99 @@ async def monitor_items():
 async def on_ready():
     print(f"Logged in as {bot.user.name}")
     await bot.tree.sync()
-    await bot.loop.create_task(monitor_items())
+    bot.loop.create_task(monitor_items())
+
+@bot.event
+async def on_guild_join(guild):
+    print(f"Joined guild {guild.name} (ID: {guild.id})")
+
+    embed = discord.Embed(
+        title="Guild Joined",
+        description=(
+            "Hello! \n"
+            "I'm `roblox-item-checker`, an open-source GitHub repository for anyone to fork and run for their purposes. "
+            "You can view the repo here: [GitHub Repo](https://github.com/Bright2676/roblox-item-checker) \n"
+            "If you have any questions, please DM `bright2676`."
+        ),
+        color=discord.Color.green()
+    )
+    embed.set_footer(
+        text="Created by bright2676 - Version 1.0",
+        icon_url="https://static.wikia.nocookie.net/nicos-nextbots/images/9/94/Steam.png/revision/latest?cb=20240428120708"
+    )
+    
+    if guild.system_channel:
+        try:
+            await guild.system_channel.send(embed=embed)
+            print(f"Sent welcome message to the system channel of guild {guild.name}.")
+        except discord.Forbidden:
+            print(f"Unable to send a message to the system channel of guild {guild.name}.")
+        except Exception as e:
+            print(f"An unexpected error occurred while sending a message to the system channel: {e}")
+    else:
+        print(f"Guild {guild.name} does not have a system channel set.")
 
 @bot.tree.command(name="add_item", description="Add a new Roblox item ID to monitor")
 async def add_item(interaction: discord.Interaction, item_id: str):
-    if item_id in ITEM_IDS:
+    item_ids = load_item_ids()
+    if item_id in item_ids:
         embed = discord.Embed(
             title="Item ID Monitoring",
             description=f"Item ID {item_id} is already being monitored.",
             color=discord.Color.yellow()
         )
+        embed.set_footer(text="Created by bright2676 - Version 1.0", icon_url="https://static.wikia.nocookie.net/nicos-nextbots/images/9/94/Steam.png/revision/latest?cb=20240428120708")
         await interaction.response.send_message(embed=embed, ephemeral=True)
     else:
-        ITEM_IDS.append(item_id)
-        save_item_ids()
+        item_ids.append(item_id)
+        save_item_ids(item_ids)
         embed = discord.Embed(
             title="Item ID Monitoring",
             description=f"Added item ID {item_id} to the monitoring list.",
             color=discord.Color.green()
         )
+        embed.set_footer(text="Created by bright2676 - Version 1.0", icon_url="https://static.wikia.nocookie.net/nicos-nextbots/images/9/94/Steam.png/revision/latest?cb=20240428120708")
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
+@bot.tree.command(name="remove_item", description="Remove an existing Roblox item ID from the monitoring list")
+async def remove_item(interaction: discord.Interaction, item_id: str):
+    item_ids = load_item_ids()
+    if item_id in item_ids:
+        item_ids.remove(item_id)
+        save_item_ids(item_ids)
+        embed = discord.Embed(
+            title="Item ID Removed",
+            description=f"Removed item ID {item_id} from the monitoring list.",
+            color=discord.Color.red()
+        )
+        embed.set_footer(text="Created by bright2676 - Version 1.0", icon_url="https://static.wikia.nocookie.net/nicos-nextbots/images/9/94/Steam.png/revision/latest?cb=20240428120708")
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+    else:
+        embed = discord.Embed(
+            title="Item ID Not Found",
+            description=f"Item ID {item_id} is not in the monitoring list.",
+            color=discord.Color.orange()
+        )
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
 @bot.tree.command(name="list_items", description="List all currently monitored Roblox item IDs")
 async def list_items(interaction: discord.Interaction):
-    if ITEM_IDS:
-        item_list = "\n".join(ITEM_IDS)
+    item_ids = load_item_ids()
+    if item_ids:
+        item_list = "\n".join(item_ids)
         embed = discord.Embed(
             title="Currently Monitored Item IDs",
             description=f"The following item IDs are being monitored:\n{item_list}",
             color=discord.Color.blue()
         )
+        embed.set_footer(text="Created by bright2676 - Version 1.0", icon_url="https://static.wikia.nocookie.net/nicos-nextbots/images/9/94/Steam.png/revision/latest?cb=20240428120708")
     else:
         embed = discord.Embed(
             title="No Items Monitored",
             description="No item IDs are currently being monitored.",
             color=discord.Color.red()
         )
+        embed.set_footer(text="Created by bright2676 - Version 1.0", icon_url="https://static.wikia.nocookie.net/nicos-nextbots/images/9/94/Steam.png/revision/latest?cb=20240428120708")
     await interaction.response.send_message(embed=embed, ephemeral=True)
 
 bot.run(TOKEN)
