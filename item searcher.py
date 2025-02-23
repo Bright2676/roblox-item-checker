@@ -45,12 +45,9 @@ async def monitor_items():
     while not bot.is_closed():
         item_ids = load_item_ids()
         for item_id in item_ids:
-            if item_id not in notified:
-                notified[item_id] = None
-
             on_sale, price = await is_item_on_sale(item_id)
 
-            if on_sale and notified[item_id] != "on_sale":
+            if on_sale and notified.get(item_id) != "on_sale":
                 notified[item_id] = "on_sale"
                 embed = discord.Embed(
                     title="Item On Sale",
@@ -60,7 +57,7 @@ async def monitor_items():
                 embed.set_footer(text="Created by bright2676 - Version 1.0", icon_url="https://static.wikia.nocookie.net/nicos-nextbots/images/9/94/Steam.png/revision/latest?cb=20240428120708")
                 await channel.send(embed=embed)
 
-            elif not on_sale and notified[item_id] != "off_sale":
+            elif not on_sale and notified.get(item_id) != "off_sale":
                 notified[item_id] = "off_sale"
                 embed = discord.Embed(
                     title="Item Off Sale",
@@ -84,7 +81,7 @@ async def on_guild_join(guild):
 
     embed = discord.Embed(
         title="Guild Joined",
-        description=(
+        description=( 
             "Hello! \n"
             "I'm `roblox-item-checker`, an open-source GitHub repository for anyone to fork and run for their purposes. "
             "You can view the repo here: [GitHub Repo](https://github.com/Bright2676/roblox-item-checker) \n"
@@ -96,7 +93,7 @@ async def on_guild_join(guild):
         text="Created by bright2676 - Version 1.0",
         icon_url="https://static.wikia.nocookie.net/nicos-nextbots/images/9/94/Steam.png/revision/latest?cb=20240428120708"
     )
-    
+
     if guild.system_channel:
         try:
             await guild.system_channel.send(embed=embed)
